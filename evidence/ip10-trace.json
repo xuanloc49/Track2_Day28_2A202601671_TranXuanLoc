@@ -1,0 +1,100 @@
+{
+  "required_spans": [
+    "lab28.gateway.request",
+    "lab28.api.ingest",
+    "lab28.kafka.produce",
+    "lab28.kafka.consume",
+    "lab28.airflow.dag",
+    "lab28.spark.delta_merge",
+    "lab28.api.ask",
+    "lab28.feast.get_online_features",
+    "lab28.qdrant.query",
+    "lab28.mlflow.resolve_release",
+    "lab28.vllm.chat_completion"
+  ],
+  "services": {
+    "lab28-gateway": {
+      "count": 5,
+      "sample": [
+        {
+          "trace_id": "2974ac8ed3e4267e4b3862fdbc35fda4",
+          "span_names": [
+            "lab28.gateway.request"
+          ]
+        },
+        {
+          "trace_id": "0be27e1ef65ff3cc65ee3aa9cb4aa04d",
+          "span_names": [
+            "lab28.gateway.request"
+          ]
+        },
+        {
+          "trace_id": "c515857c46a8a923156376a4d8e1518c",
+          "span_names": [
+            "lab28.gateway.request"
+          ]
+        }
+      ]
+    },
+    "lab28-api": {
+      "count": 5,
+      "sample": [
+        {
+          "trace_id": "a144a385ea58aa30bf87982211a9c942",
+          "span_names": [
+            "GET"
+          ]
+        },
+        {
+          "trace_id": "62661fbcdf6810f7cc22c9b050894f74",
+          "span_names": [
+            "HEAD"
+          ]
+        },
+        {
+          "trace_id": "fbdacbf5eba8abd0de3be8be51cdbe74",
+          "span_names": [
+            "HEAD"
+          ]
+        }
+      ]
+    },
+    "lab28-airflow": {
+      "count": 0,
+      "sample": []
+    }
+  },
+  "ask": {
+    "status_code": 503,
+    "body": {
+      "schema_version": "1",
+      "category": "dependency_unavailable",
+      "message": "inference endpoint unavailable: vLLM unreachable: ConnectError",
+      "trace_id": "885399cb5970ad31431d47b991b94a82",
+      "service": "lab28-api",
+      "retryable": true
+    }
+  },
+  "selected_trace": {
+    "trace_id": "0e83f9a0945a5626afe7dad0ba46b883",
+    "jaeger_url": "http://localhost:16686/trace/0e83f9a0945a5626afe7dad0ba46b883",
+    "matched_kafka_event": "doc:doc-ip02-airflow:9b7e8bc4f2409294439202f5d734c323",
+    "span_names": [
+      "lab28.gateway.request",
+      "POST /api/v1/documents",
+      "lab28.api.ingest",
+      "lab28.kafka.produce"
+    ],
+    "missing_required": [
+      "lab28.kafka.consume",
+      "lab28.airflow.dag",
+      "lab28.spark.delta_merge",
+      "lab28.api.ask",
+      "lab28.feast.get_online_features",
+      "lab28.qdrant.query",
+      "lab28.mlflow.resolve_release",
+      "lab28.vllm.chat_completion"
+    ],
+    "note": "core stack proves HTTP→Kafka propagation on one W3C trace ID. Airflow/Spark/vLLM spans stay UNVERIFIED until the full profile and a real vLLM endpoint run."
+  }
+}
