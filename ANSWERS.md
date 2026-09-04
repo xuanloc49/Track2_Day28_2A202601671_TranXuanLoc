@@ -53,6 +53,30 @@ Workaround Qdrant: image `qdrant/qdrant:v1.19.0` có `./entrypoint.sh` **0 byte*
 
 Windows: `lab28 release` cần `$env:PYTHONUTF8="1"` vì MLflow in emoji ra stdout (`cp1252`).
 
+### GPU / vLLM / `/ask`
+
+Image thật `vllm/vllm-openai:v0.28.0`. Overlay `compose.gpu.yaml`:
+`VLLM_USE_V2_MODEL_RUNNER=0`, `VLLM_WSL2_ENABLE_PIN_MEMORY=1` (WSL không có UVA),
+`--dtype half --max-model-len 1024 --gpu-memory-utilization 0.70 --enforce-eager
+--max-num-seqs 1`. Model `Qwen/Qwen3-0.6B` vì Qwen3-1.7B không vừa 4 GB VRAM.
+
+`POST /api/v1/ask` qua gateway **HTTP 200** trên vLLM thật:
+
+- trace `4c48cdeed2354d0a8046bbf907b46847`
+- champion `lab28-rag-release` v3, `vllm_model_id=Qwen/Qwen3-0.6B`
+- `prompt_tokens=509`, `completion_tokens=64` (câu trả lời bị cắt ở token limit → `degraded`)
+- Jaeger có đủ 6 span serving: `lab28.gateway.request`, `lab28.api.ask`,
+  `lab28.feast.get_online_features`, `lab28.qdrant.query`,
+  `lab28.mlflow.resolve_release`, `lab28.vllm.chat_completion`
+
+Pytest `-m gpu` **không Spark** (Spark Connect đã OOM 137 trên Docker VM 8 GB):
+**8 passed** (Prometheus scrape vLLM, IT-J3 serving theo alias, IT-J4 degraded
++ gateway eject). 7 test gpu còn lại cần DAG + `/ask` cùng một trace ID — chưa
+chạy. Chi tiết: `evidence/pytest-gpu.txt`.
+
+Envoy `health_check` dùng **`/ready`** (timeout 8s) và `healthy_panic_threshold: 0`
+để một upstream `not_ready` bị đẩy khỏi rotation thay vì panic-mode.
+
 ## 2. Trade-offs kỹ thuật
 
 ### Header Kafka: bỏ `traceparent` rỗng thay vì gửi placeholder
@@ -77,9 +101,13 @@ online row có `PRESENT` + `delta_version` (xem `evidence/ip04-feast-online.json
 
 ### Readiness tách bắt buộc / không bắt buộc
 
-Qdrant / Kafka / MLflow champion là mandatory. Feast optional → stop Feast không
-đưa pod ra `not_ready` (IT-J4). Stop Qdrant → `/ready` 503. Envoy health-check
-**`/health` chứ không `/ready`**.
+Qdrant / Kafka / MLflow champion / vLLM là mandatory. Feast optional → stop Feast
+không đưa pod ra `not_ready` (IT-J4 gpu). Stop Qdrant → API `/ready` 503; Envoy
+health-check **`/ready`** nên gateway trả 503 *của Envoy* (không body `components`),
+trong khi gọi thẳng API vẫn trả JSON breakdown.
+
+Timeout health-check 8s vì `/ready` trên stack này ~3s (vLLM probe). Timeout 2s
+sẽ flap host duy nhất.
 
 Gateway 10 token/s: burst cho **200** và **429** (`x-lab28-rate-limited`).
 
@@ -91,39 +119,30 @@ rootfs, drop ALL caps, NetworkPolicy, HPA/PDB, probes tách. Argo CD
 (`refs/tags/v3.0.0`) trên Git, không `kubectl edit`. Validate tĩnh đã pass;
 **sync live trên cluster UNVERIFIED** (không có Argo CD local).
 
-### GPU/vLLM
+### GPU/vLLM trên 4 GB + Docker VM 8 GB
 
-Máy có RTX 2050 (4 GB) + Docker Desktop/WSL. Image `vllm/vllm-openai:v0.28.0`
-(~20 GB) đã pull sau khi dọn ổ. Không giả OpenAI-compatible.
+Qwen3-1.7B không vừa VRAM còn ~3.2/4.0 GiB. Serving dùng 0.6B. `max-model-len`
+phải 1024: prompt RAG + template MLflow + 3 docs ~509 token; 512 làm vLLM trả
+400 và `/ask` 503.
 
-vLLM 0.28 mặc định GPUModelRunnerV2 đòi UVA; trên WSL `pin_memory` tắt nên
-engine crash `UVA is not available`. Overlay `compose.gpu.yaml` đặt
-`VLLM_USE_V2_MODEL_RUNNER=0` và `VLLM_WSL2_ENABLE_PIN_MEMORY=1`, cộng
-`--dtype half --max-model-len 512 --gpu-memory-utilization 0.70 --enforce-eager
---max-num-seqs 1`.
-
-Qwen3-1.7B fp16 không vừa VRAM còn ~3.2/4.0 GiB (Windows chiếm GPU). Serving
-live dùng `Qwen/Qwen3-0.6B` (`ports.template`). Probe: `/version` = `0.28.0`,
-111 metric `vllm:`, `is_real_vllm: true` → `evidence/ip07-vllm-identity.json`.
-`lab28 evidence` ghi IP07 **ready**.
-
-Sau đó full profile + vLLM + pytest `-m gpu` làm Docker Desktop 500/OOM;
-cổng 8001 mất, test gpu dừng ở `EEE` (fixture), **không** có `/ask` 200 hay
-span serving. GitOps live cluster vẫn UNVERIFIED.
+Không chạy đồng thời Spark Connect + vLLM: Spark 137, engine Docker 500. IP10
+do đó **hai trace live** (ingest+pipeline, rồi serving) — union đủ 11 span
+matrix, không phải một ID xuyên suốt.
 
 ## 3. Production gaps (cần nói khi demo)
 
 1. **Kafka lab:** 1 broker, RF=1, plaintext.
-2. **Gateway:** rate limit 10 token/s, không JWT.
+2. **Gateway:** rate limit 10 token/s, không JWT. Health-check `/ready` nghĩa là
+   ingest cũng bị eject khi vLLM/Qdrant down (một process vừa ingest vừa serve).
 3. **Secret:** Grafana `admin/admin` là lab default; không commit `.env`.
 4. **LangSmith UNVERIFIED** (không `LANGSMITH_API_KEY`).
 5. **Load probe** bắn `/ready` (stdlib script), không phải `/ask`. P95/P99 bị
    token bucket 10 rps làm trễ — đó là bottleneck cạnh tranh cổng, không phải
-   latency vLLM.
-6. **RAM:** Docker VM 8 GB; Spark + Airflow + core stack dễ OOM (container 137).
-7. **IP07 identity đã live**, nhưng `/ask` + test gpu-marked chưa pass vì
-   full stack + vLLM vượt RAM Docker VM 8 GB (engine 500, cổng 8001 mất).
+   latency vLLM. `/ask` thật ~4.8s (llm ~3.6s) trên 0.6B.
+6. **RAM:** Docker VM 8 GB không giữ Spark + Airflow + vLLM cùng lúc.
+7. **Câu trả lời truncated** ở `max_tokens=64` → `degraded` dù inference thật.
 8. **GitOps self-heal live:** chưa có cluster; chỉ validate manifest.
+9. **Cùng một trace ID cho 11 span:** chưa chứng minh (cần Spark+vLLM cùng lúc).
 
 ## 4. Bằng chứng — file live, không bịa
 
@@ -138,29 +157,31 @@ span serving. GitOps live cluster vẫn UNVERIFIED.
 | `evidence/ip05-qdrant-search.json` | **live** | 14 points, hybrid scores |
 | `evidence/ip06-mlflow-release.json` | **live** | IT-J3 promote v3→v4 (`run_id=19e1ae8944a745c09caf3b3fe725a6b1`) |
 | `evidence/ip07-vllm-identity.json` | **live** | vLLM 0.28.0, `Qwen/Qwen3-0.6B`, 111 metric `vllm:` |
+| `evidence/ip07-ask-serving.json` | **live** | `/ask` 200, model 0.6B, 6 serving spans trên Jaeger |
 | `evidence/ip08-gateway.json` | **live** | 200 + 429 + `x-request-id` |
-| `evidence/ip09-prometheus-targets.json` | **live** | targets + alert rules (vLLM optional down) |
+| `evidence/ip09-prometheus-targets.json` | **live** | targets + alert rules (snapshot trước GPU; scrape vLLM **up** lúc chạy gpu test) |
 | `evidence/ip09-grafana-dashboards.json` | **live** | dashboard `lab28-platform` |
-| `evidence/ip10-trace.json` | **live ingest+pipeline** | trace `45c8b110fbb94076841a0ef98e56bee4`; thiếu ask/vLLM/Feast/Qdrant query |
+| `evidence/ip10-trace.json` | **live, hai trace** | ingest `45c8b110…` + serving `4c48cdee…`; union đủ 11 required spans |
 | `evidence/integration-report.json` | **live** | IP07 ready; score 100 trên 6 điểm CLI verify (IP02/08/09/10 unverified từ process) |
 | `evidence/load-profile.json` | **live** | 200 req / 8 workers: P50 1414 ms, P95 5233 ms, P99 7598 ms, 200× HTTP 200 |
 | `evidence/failure-recovery.json` | **live** | IT-J4 Feast/Qdrant/DLQ/replay |
 | `evidence/rollback.json` | **live** | IT-J3 alias promotion + rollback |
 | `evidence/gitops-validation.json` | **static pass / cluster UNVERIFIED** | `validate_manifests.py` |
+| `evidence/pytest-gpu.txt` | **live** | 8 gpu tests passed; 7 chưa chạy vì thiếu Spark |
 
 Sơ đồ kiến trúc: `docs/images/lab28-architecture-overview.png`.
 
 ## 5. Việc còn lại
 
-1. Restart Docker Desktop, lên **core + gpu** (không Spark/Airflow) rồi
-   gọi `/ask` + pytest `-m gpu` khi RAM đủ; sau đó thu span serving IP10.
+1. Spark + vLLM cùng lúc (cần Docker VM > 8 GB) để IT-J1/J5/span-coverage gpu
+   chứng minh **một** trace ID mang đủ 11 span.
 2. Cluster Argo CD nếu lớp cấp → drift/self-heal live.
-3. Commit/push `compose.gpu.yaml`, `ports.template`, evidence IP07, `ANSWERS.md`
-   khi bạn yêu cầu.
+3. `LANGSMITH_API_KEY` nếu muốn chân export IP10 thứ hai.
+4. Commit/push evidence serving + `compose.gpu.yaml` + Envoy `/ready` khi bạn yêu cầu.
 
 ## 6. Contribution
 
-Làm cá nhân: adapter, fast suite, Compose core + full profile, J1–J5 (trừ gpu),
-evidence IP01–IP06/IP08–IP10 (ingest+pipeline), IP07 identity vLLM 0.28.0,
-load profile, failure injection, MLflow rollback, GitOps validate. Còn `/ask`
-end-to-end trên GPU (OOM) và GitOps sync live.
+Làm cá nhân: adapter, fast suite, Compose core + full profile, J1–J5 (phần
+không gpu), 8 test gpu (Prometheus/J3/J4), `/ask` 200 trên vLLM 0.28.0,
+evidence IP01–IP10 (IP10 = union hai trace), load profile, failure injection,
+MLflow rollback, GitOps validate. Chưa: cùng-ID 11 span, LangSmith, GitOps sync live.

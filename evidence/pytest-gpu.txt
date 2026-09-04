@@ -1,0 +1,21 @@
+GPU-marked tests run against live vLLM 0.28.0 (Qwen/Qwen3-0.6B) on WSL.
+
+Spark Connect stayed stopped (previous OOM 137 on the 8GB Docker VM), so
+IT-J1 / IT-J5 / span-coverage gpu tests that need a DAG were not started.
+
+Passed:
+
+- test_the_inference_endpoint_is_scraped
+- IT-J3 gpu (3): serving follows promoted alias; release gauge
+- IT-J4 gpu (4): Feast degraded /ask; Qdrant not_ready; gateway ejects unready
+  pod after Envoy health_check path=/ready + panic_threshold 0; direct /ask
+  still answers when out of rotation
+
+Not run (need Spark + Airflow DAG + /ask on one trace):
+
+- IT-J1 gpu (3)
+- IT-J5 test_the_serving_leg_joins_the_same_trace
+- IT-trace-span-coverage gpu (3)
+
+Serving /ask HTTP 200 and the six serving spans were collected separately:
+evidence/ip07-ask-serving.json and evidence/ip10-trace.json (serving object).

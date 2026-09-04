@@ -70,14 +70,16 @@ static_resources:
                   address:
                     socket_address: {address: api, port_value: 8000}
       health_checks:
-        - timeout: 2s
-          interval: 2s
+        - timeout: 8s
+          interval: 5s
           unhealthy_threshold: 1
           healthy_threshold: 1
-          # Liveness decides whether Envoy can route. Application readiness is
-          # deliberately proxied so students can see the exact degraded
-          # dependency report instead of an opaque "no healthy upstream".
-          http_health_check: {path: /health}
+          # Rotation follows /ready, not /health: a live pod that cannot serve
+          # (Qdrant/vLLM down) must leave the load-balancer. Timeout is longer
+          # than a full readiness probe (~3s here) so a slow check does not
+          # flap the only upstream. panic_threshold 0 so a single unready host
+          # is not brought back by Envoy's default 50% panic mode.
+          http_health_check: {path: /ready}
       common_lb_config:
         healthy_panic_threshold: {value: 0}
     - name: otel_collector

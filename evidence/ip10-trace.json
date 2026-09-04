@@ -1,37 +1,121 @@
 {
-  "trace_id": "45c8b110fbb94076841a0ef98e56bee4",
-  "traceparent": "00-45c8b110fbb94076841a0ef98e56bee4-98cb7d140a194e96-01",
-  "dag_run_id": "it-a1d0239c",
-  "span_count": 11,
-  "span_names": [
+  "note": "Two live traces cover the matrix spans. Ingest+pipeline ran under IT-J5 while Spark/Airflow were up. Serving /ask ran later on the same host with real vLLM 0.28.0 after Spark/Airflow were stopped so the 8GB Docker VM would not OOM. Same-id coverage of all 11 spans needs Spark+Airflow+vLLM together.",
+  "required_spans": [
+    "lab28.gateway.request",
+    "lab28.api.ingest",
+    "lab28.kafka.produce",
+    "lab28.kafka.consume",
+    "lab28.airflow.dag",
+    "lab28.spark.delta_merge",
+    "lab28.api.ask",
+    "lab28.feast.get_online_features",
+    "lab28.qdrant.query",
+    "lab28.mlflow.resolve_release",
+    "lab28.vllm.chat_completion"
+  ],
+  "same_trace_id_for_all_spans": false,
+  "ingest_pipeline": {
+    "trace_id": "45c8b110fbb94076841a0ef98e56bee4",
+    "traceparent": "00-45c8b110fbb94076841a0ef98e56bee4-98cb7d140a194e96-01",
+    "dag_run_id": "it-a1d0239c",
+    "span_count": 11,
+    "span_names": [
+      "POST /api/v1/feedback",
+      "POST /api/v1/feedback http receive",
+      "POST /api/v1/feedback http send",
+      "lab28.airflow.dag",
+      "lab28.api.ingest",
+      "lab28.gateway.request",
+      "lab28.kafka.consume",
+      "lab28.kafka.produce",
+      "lab28.spark.delta_merge"
+    ],
+    "services": [
+      "lab28-airflow",
+      "lab28-api",
+      "lab28-gateway"
+    ],
+    "required_spans_present": [
+      "lab28.airflow.dag",
+      "lab28.api.ingest",
+      "lab28.gateway.request",
+      "lab28.kafka.consume",
+      "lab28.kafka.produce",
+      "lab28.spark.delta_merge"
+    ],
+    "required_spans_missing": [
+      "lab28.api.ask",
+      "lab28.feast.get_online_features",
+      "lab28.mlflow.resolve_release",
+      "lab28.qdrant.query",
+      "lab28.vllm.chat_completion"
+    ]
+  },
+  "serving": {
+    "trace_id": "4c48cdeed2354d0a8046bbf907b46847",
+    "traceparent": "00-4c48cdeed2354d0a8046bbf907b46847-2ae3c82867a34d22-01",
+    "ask_status": 200,
+    "span_count": 14,
+    "span_names": [
+      "POST",
+      "POST /api/v1/ask",
+      "POST /api/v1/ask http receive",
+      "POST /api/v1/ask http send",
+      "lab28.api.ask",
+      "lab28.feast.get_online_features",
+      "lab28.gateway.request",
+      "lab28.mlflow.resolve_release",
+      "lab28.qdrant.query",
+      "lab28.vllm.chat_completion"
+    ],
+    "services": [
+      "lab28-api",
+      "lab28-gateway"
+    ],
+    "required_spans_present": [
+      "lab28.api.ask",
+      "lab28.feast.get_online_features",
+      "lab28.gateway.request",
+      "lab28.mlflow.resolve_release",
+      "lab28.qdrant.query",
+      "lab28.vllm.chat_completion"
+    ],
+    "required_spans_missing": [],
+    "vllm_model_id": "Qwen/Qwen3-0.6B",
+    "mlflow_release_version": "3"
+  },
+  "union_span_names": [
+    "POST",
+    "POST /api/v1/ask",
+    "POST /api/v1/ask http receive",
+    "POST /api/v1/ask http send",
     "POST /api/v1/feedback",
     "POST /api/v1/feedback http receive",
     "POST /api/v1/feedback http send",
     "lab28.airflow.dag",
+    "lab28.api.ask",
     "lab28.api.ingest",
+    "lab28.feast.get_online_features",
     "lab28.gateway.request",
     "lab28.kafka.consume",
     "lab28.kafka.produce",
-    "lab28.spark.delta_merge"
-  ],
-  "services": [
-    "lab28-airflow",
-    "lab28-api",
-    "lab28-gateway"
+    "lab28.mlflow.resolve_release",
+    "lab28.qdrant.query",
+    "lab28.spark.delta_merge",
+    "lab28.vllm.chat_completion"
   ],
   "required_spans_present": [
     "lab28.airflow.dag",
+    "lab28.api.ask",
     "lab28.api.ingest",
+    "lab28.feast.get_online_features",
     "lab28.gateway.request",
     "lab28.kafka.consume",
     "lab28.kafka.produce",
-    "lab28.spark.delta_merge"
-  ],
-  "required_spans_missing": [
-    "lab28.api.ask",
-    "lab28.feast.get_online_features",
     "lab28.mlflow.resolve_release",
     "lab28.qdrant.query",
+    "lab28.spark.delta_merge",
     "lab28.vllm.chat_completion"
-  ]
+  ],
+  "required_spans_missing": []
 }

@@ -1,0 +1,132 @@
+{
+  "vllm_version": {
+    "version": "0.28.0"
+  },
+  "ready_status": 200,
+  "ready_body": {
+    "schema_version": "1",
+    "status": "ready",
+    "components": [
+      {
+        "name": "kafka",
+        "ready": true,
+        "detail": "1 broker(s); 4 declared topics present",
+        "owner": "team-ingestion"
+      },
+      {
+        "name": "mlflow",
+        "ready": true,
+        "detail": "lab28-rag-release v3 is champion",
+        "owner": "team-data"
+      },
+      {
+        "name": "qdrant",
+        "ready": true,
+        "detail": "15 points; ok",
+        "owner": "team-serving"
+      },
+      {
+        "name": "vllm",
+        "ready": true,
+        "detail": "vLLM identity confirmed",
+        "owner": "team-serving"
+      },
+      {
+        "name": "feast",
+        "ready": true,
+        "detail": "ok",
+        "owner": "team-data"
+      }
+    ],
+    "trace_id": "0df76fde4b12ab56895207ac381a210b"
+  },
+  "trace_id": "4c48cdeed2354d0a8046bbf907b46847",
+  "traceparent": "00-4c48cdeed2354d0a8046bbf907b46847-2ae3c82867a34d22-01",
+  "ask_status": 200,
+  "ask_headers": {
+    "x-request-id": "8a71121e-b400-9739-af73-29543f2e696c",
+    "x-lab28-trace-id": "4c48cdeed2354d0a8046bbf907b46847"
+  },
+  "ask_body": {
+    "schema_version": "1",
+    "answer": "<think>\nOkay, the user is asking about the \"Nen tang du lieu cua lab nay gom nhung thanh phan nao?\" which translates to \"What is the main problem in the lab?\" in Vietnamese. Let me check the provided content.\n\nLooking at the three guidelines, [1] talks",
+    "sources": [
+      {
+        "doc_id": "doc-ip03-delta",
+        "title": "IP03 — Spark và Delta Lake giữ lịch sử dữ liệu",
+        "snippet": "Spark thực hiện lệnh MERGE theo idempotency_key nên phát lại cùng một sự kiện chỉ tạo ra đúng một dòng trong bảng Delta. Mỗi lần ghi tạo một phiên bản mới trong transaction log, cho phép du hành thời gian: đọc lại bảng ở phiên bản cũ để so sánh số dòng và schema. Bằng chứng phục vụ luôn ghi kèm delta_version, nhờ đó câu trả lời của mô hình có thể kiểm chứng lại sau nhiều tháng.",
+        "score": 0.56666666,
+        "retrieval_mode": "hybrid"
+      },
+      {
+        "doc_id": "doc-ip09-metrics",
+        "title": "IP09 — Prometheus và Grafana giám sát nền tảng",
+        "snippet": "Prometheus thu thập số liệu từ API, Feast, Qdrant và vLLM, còn Grafana hiển thị chúng theo từng chặng của hành trình yêu cầu. Các chỉ số quan trọng gồm lab28_request_seconds, lab28_degraded_responses_total, lab28_latency_budget_exceeded_total và lab28_component_ready. Vượt ngân sách độ trễ không làm hỏng yêu cầu, nhưng làm tăng bộ đếm để hồi quy hiệu năng lộ ra trên bảng điều khiển trước khi trở t",
+        "score": 0.5,
+        "retrieval_mode": "hybrid"
+      },
+      {
+        "doc_id": "doc-health-semantics",
+        "title": "Ba câu hỏi sức khỏe khác nhau",
+        "snippet": "Đường /health trả lời tiến trình còn sống hay không và không chạm vào phụ thuộc nào. Đường /startup trả lời cấu hình đã nạp và các client đã dựng xong chưa. Đường /ready trả lời pod này có phục vụ được ngay bây giờ không, và chỉ riêng nó mới có quyền đưa pod ra khỏi vòng luân chuyển. Trạng thái degraded vẫn trả về 200 vì kho đặc trưng nguội làm câu trả lời kém đi chứ không làm nó sai.",
+        "score": 0.33333334,
+        "retrieval_mode": "hybrid"
+      }
+    ],
+    "evidence": {
+      "trace_id": "4c48cdeed2354d0a8046bbf907b46847",
+      "mlflow_model_name": "lab28-rag-release",
+      "mlflow_release_version": "3",
+      "mlflow_run_id": "1f2fc3871fc1487ea97238f97ccca06f",
+      "vllm_model_id": "Qwen/Qwen3-0.6B",
+      "embedding_model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@faf4aa4225822f3bc6376869cb1164e8e3feedd0",
+      "delta_version": 7,
+      "feature_freshness_seconds": 42265.345393,
+      "degraded": true,
+      "degraded_reasons": [
+        "answer truncated at the token limit"
+      ]
+    },
+    "audit": {
+      "input_hash": "61e07e708bda8dd628d8f65ac95f12b1065b38fc29b1764bf8fc8f70fa1db084",
+      "output_hash": "11ff1203142b42eb445a863217dad893cc6f65a38804d87e28be9f7ed7c6d3e9",
+      "output_length": 252,
+      "prompt_tokens": 509,
+      "completion_tokens": 64,
+      "latency": {
+        "feature_ms": 32.966,
+        "retrieval_ms": 903.534,
+        "llm_ms": 3646.074,
+        "guardrail_ms": 0.027,
+        "total_ms": 4847.365
+      }
+    }
+  },
+  "jaeger_status": 200,
+  "span_names": [
+    "POST",
+    "POST /api/v1/ask",
+    "POST /api/v1/ask http receive",
+    "POST /api/v1/ask http send",
+    "lab28.api.ask",
+    "lab28.feast.get_online_features",
+    "lab28.gateway.request",
+    "lab28.mlflow.resolve_release",
+    "lab28.qdrant.query",
+    "lab28.vllm.chat_completion"
+  ],
+  "required_present": [
+    "lab28.api.ask",
+    "lab28.feast.get_online_features",
+    "lab28.gateway.request",
+    "lab28.mlflow.resolve_release",
+    "lab28.qdrant.query",
+    "lab28.vllm.chat_completion"
+  ],
+  "required_missing": [],
+  "span_count": 14,
+  "services": [
+    "lab28-api",
+    "lab28-gateway"
+  ]
+}

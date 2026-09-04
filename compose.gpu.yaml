@@ -15,7 +15,7 @@ services:
       - --dtype
       - half
       - --max-model-len
-      - "512"
+      - "1024"
       - --gpu-memory-utilization
       - "0.70"
       - --enforce-eager
@@ -37,6 +37,9 @@ services:
     environment:
       LAB28_VLLM_BASE_URL: http://vllm:8000/v1
       LAB28_VLLM_REQUIRE_REAL: "true"
+      LAB28_VLLM_MODEL_ID: ${LAB28_VLLM_MODEL_ID:-Qwen/Qwen3-0.6B}
+      LAB28_VLLM_MAX_TOKENS: "64"
+      LAB28_VLLM_TIMEOUT: "90"
 
 volumes:
   huggingface-cache:
