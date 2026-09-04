@@ -1,0 +1,5 @@
+IT-J1 golden path: 12 passed, 3 skipped (gpu / vLLM unreachable) in 166.66s
+IT-J2 + IT-J3 + IT-J5 + gateway + prometheus + span-contract: 35 passed, 9 deselected (gpu/langsmith) in 178.78s
+IT-J4 degraded-recovery: 9 passed, 4 deselected (gpu) in 138.25s
+
+Offline (previously): pytest starter-tests tests -q → 87 passed

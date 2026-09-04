@@ -1,0 +1,27 @@
+{
+  "journey": "IT-J4-degraded-recovery",
+  "result": "9 passed, 4 gpu tests deselected",
+  "scenarios": [
+    {
+      "inject": "docker compose stop feast",
+      "expected": "Feast probe unready; overall verdict not not_ready (optional dependency)",
+      "observed": "passed"
+    },
+    {
+      "inject": "docker compose stop qdrant",
+      "expected": "/ready 503 not_ready; Qdrant mandatory",
+      "observed": "passed; recovered to baseline after start"
+    },
+    {
+      "inject": "poison (unparseable) Kafka message in same batch as valid feedback",
+      "expected": "DAG success; poison parked on DLQ; good row still in Delta",
+      "observed": "passed — no data loss"
+    },
+    {
+      "inject": "replay DLQ containing valid parked event plus poison",
+      "expected": "valid event replayed; poison skipped; MERGE keeps one row",
+      "observed": "passed — idempotent recovery"
+    }
+  ],
+  "note": "gpu-gated assertions (degraded /ask, gateway eject) were skipped because vLLM is unreachable"
+}

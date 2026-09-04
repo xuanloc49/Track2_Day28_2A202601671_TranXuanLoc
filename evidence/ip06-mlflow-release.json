@@ -1,7 +1,5 @@
 {
-  "reachable": true,
-  "has_champion": true,
-  "version": "3",
-  "run_id": "1f2fc3871fc1487ea97238f97ccca06f",
-  "detail": "lab28-rag-release v3 is champion"
+  "reachable": false,
+  "has_champion": false,
+  "detail": "no 'champion' release for lab28-rag-release: API request to http://localhost:5000/api/2.0/mlflow/registered-models/alias failed with exception HTTPConnectionPool(host='localhost', port=5000): Max retries exceeded with url: /api/2.0/mlflow/registered-models/alias?name=lab28-rag-release&alias=champion (Caused by NewConnectionError(\"HTTPConnection(host='localhost', port=5000): Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it\"))"
 }

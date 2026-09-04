@@ -1,0 +1,17 @@
+{
+  "command": "uv run python scripts/validate_manifests.py",
+  "result": "Kubernetes and GitOps manifest contracts passed",
+  "application": {
+    "file": "gitops/application.yaml",
+    "targetRevision": "refs/tags/v3.0.0",
+    "syncPolicy": {
+      "automated": {"prune": true, "selfHeal": true},
+      "revisionHistoryLimit": 5
+    },
+    "rollback_method": "change spec.source.targetRevision or image tag in Git; Argo CD selfHeal restores drift. Do not kubectl edit live."
+  },
+  "cluster_sync": {
+    "status": "UNVERIFIED",
+    "reason": "no local Kubernetes/Argo CD cluster; contract validated statically"
+  }
+}

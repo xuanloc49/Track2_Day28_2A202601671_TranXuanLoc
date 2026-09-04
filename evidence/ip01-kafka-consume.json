@@ -1,35 +1,29 @@
 {
   "topic": "data.raw",
-  "key": "doc-ip02-airflow",
-  "partition": 2,
-  "offset": 0,
+  "key": "it-j1-084d406b",
+  "partition": 0,
+  "offset": 14,
   "headers": {
-    "idempotency-key": "doc-ip02-airflow",
-    "traceparent": "00-0e83f9a0945a5626afe7dad0ba46b883-5204faee7b97eb44-01",
+    "idempotency-key": "it-j1-084d406b",
+    "traceparent": "00-6713481a7e19430b8851c66f2c771b46-e03e77cdb46d6579-01",
     "schema_version": "1"
   },
-  "trace_id": "0e83f9a0945a5626afe7dad0ba46b883",
+  "trace_id": "6713481a7e19430b8851c66f2c771b46",
   "value": {
     "schema_version": "1",
-    "event_id": "2f0d44906912416ebceb5ee0c42eeaba",
-    "idempotency_key": "doc:doc-ip02-airflow:9b7e8bc4f2409294439202f5d734c323",
-    "entity_id": "doc-ip02-airflow",
-    "occurred_at": "2026-09-03T18:52:03.028827Z",
+    "event_id": "5be0294e3c0844de87190738aac13ba5",
+    "idempotency_key": "fb:it-j1-084d406b:3e7f2dbfb268a2eeed35214745e485a7",
+    "entity_id": "it-j1-084d406b",
+    "occurred_at": "2026-09-03T20:18:01.397050Z",
     "producer": "lab28-api",
-    "traceparent": "00-0e83f9a0945a5626afe7dad0ba46b883-a757d9684a2c5176-01",
+    "traceparent": "00-6713481a7e19430b8851c66f2c771b46-a86000f5a71f7f3e-01",
     "payload": {
-      "kind": "document",
-      "doc_id": "doc-ip02-airflow",
-      "title": "IP02 — Airflow điều phối đường ống dữ liệu",
-      "text": "Airflow 3 chịu trách nhiệm điều phối luồng từ Kafka xuống Delta. DAG chạy theo lịch, đọc lô sự kiện từ data.raw, gọi job Spark để ghi vào lakehouse, rồi phát một asset event trên asset lab28://delta/feedback. Asset event là tín hiệu cho các DAG phía sau biết dữ liệu mới đã sẵn sàng, thay vì phải đoán bằng cách hẹn giờ. Tiến trình phục vụ không chứa mã điều phối: Airflow chạy trong image riêng của nó.",
+      "kind": "feedback",
+      "asker_id": "it-j1-084d406b",
+      "text": "Nền tảng chạy ổn định trong bài kiểm thử 084d406b.",
+      "rating": 5,
       "locale": "vi",
-      "tags": [
-        "ip02",
-        "airflow",
-        "orchestration"
-      ]
+      "label": "positive"
     }
-  },
-  "messages_seen": 46,
-  "messages_with_traceparent": 46
+  }
 }

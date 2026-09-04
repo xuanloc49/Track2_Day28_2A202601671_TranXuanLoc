@@ -1,0 +1,17 @@
+{
+  "journey": "IT-J3-promotion-rollback",
+  "result": "6 non-gpu tests passed; serving-follow tests skipped (no vLLM)",
+  "promotion": {
+    "from_version": "3",
+    "to_version": "4",
+    "run_id": "19e1ae8944a745c09caf3b3fe725a6b1",
+    "prompt_version": "it-j3-37226a85",
+    "delta_version": "3",
+    "evidence_file": "evidence/ip06-mlflow-release.json"
+  },
+  "rollback": {
+    "method": "ReleaseRegistry.rollback() / lab28 rollback",
+    "expected": "champion alias moves to highest version below current",
+    "observed": "tests asserted alias returned below v4; fixture restored original champion"
+  }
+}

@@ -1,86 +1,25 @@
 {
-  "request": {
-    "entities": {
-      "asker_id": [
-        "asker-001"
-      ]
-    },
-    "features": [
-      "asker_activity_v1:feedback_count",
-      "asker_activity_v1:avg_rating",
-      "asker_activity_v1:negative_ratio",
-      "asker_activity_v1:delta_version"
-    ],
-    "full_feature_names": false
+  "entity": {
+    "asker_id": "it-j1-084d406b"
   },
-  "status_code": 200,
-  "body": {
-    "results": [
-      {
-        "values": [
-          "asker-001"
-        ],
-        "statuses": [
-          "PRESENT"
-        ],
-        "event_timestamps": [
-          "1970-01-01T00:00:00Z"
-        ]
-      },
-      {
-        "values": [
-          null
-        ],
-        "statuses": [
-          "NOT_FOUND"
-        ],
-        "event_timestamps": [
-          "1970-01-01T00:00:00Z"
-        ]
-      },
-      {
-        "values": [
-          null
-        ],
-        "statuses": [
-          "NOT_FOUND"
-        ],
-        "event_timestamps": [
-          "1970-01-01T00:00:00Z"
-        ]
-      },
-      {
-        "values": [
-          null
-        ],
-        "statuses": [
-          "NOT_FOUND"
-        ],
-        "event_timestamps": [
-          "1970-01-01T00:00:00Z"
-        ]
-      },
-      {
-        "values": [
-          null
-        ],
-        "statuses": [
-          "NOT_FOUND"
-        ],
-        "event_timestamps": [
-          "1970-01-01T00:00:00Z"
-        ]
-      }
-    ],
-    "metadata": {
-      "feature_names": [
-        "asker_id",
-        "delta_version",
-        "feedback_count",
-        "avg_rating",
-        "negative_ratio"
-      ]
-    }
+  "feature_service": "asker_serving_v1",
+  "features": {
+    "schema_version": "1",
+    "asker_id": "it-j1-084d406b",
+    "feedback_count": 1,
+    "avg_rating": 5.0,
+    "negative_ratio": 0.0,
+    "last_event_ts": "2026-09-03T20:18:01Z",
+    "delta_version": 1
   },
-  "note": "core stack: Feast is serving; rows stay empty until the full-profile Spark export/materialize runs"
+  "statuses": {
+    "asker_id": "PRESENT",
+    "delta_version": "PRESENT",
+    "feedback_count": "PRESENT",
+    "avg_rating": "PRESENT",
+    "negative_ratio": "PRESENT"
+  },
+  "degraded": false,
+  "freshness_seconds": 155.580498,
+  "lookup_ms": 575.7389000063995
 }
