@@ -93,10 +93,23 @@ rootfs, drop ALL caps, NetworkPolicy, HPA/PDB, probes tách. Argo CD
 
 ### GPU/vLLM
 
-Máy có RTX 2050 (4 GB). Image `vllm/vllm-openai` quá lớn so với ~9 GB trống trên
-ổ C; không giả OpenAI-compatible. IP07 và span serving (`lab28.api.ask`,
-`lab28.vllm.chat_completion`) ghi **UNVERIFIED**. `/api/v1/ask` = 503
-`dependency_unavailable`.
+Máy có RTX 2050 (4 GB) + Docker Desktop/WSL. Image `vllm/vllm-openai:v0.28.0`
+(~20 GB) đã pull sau khi dọn ổ. Không giả OpenAI-compatible.
+
+vLLM 0.28 mặc định GPUModelRunnerV2 đòi UVA; trên WSL `pin_memory` tắt nên
+engine crash `UVA is not available`. Overlay `compose.gpu.yaml` đặt
+`VLLM_USE_V2_MODEL_RUNNER=0` và `VLLM_WSL2_ENABLE_PIN_MEMORY=1`, cộng
+`--dtype half --max-model-len 512 --gpu-memory-utilization 0.70 --enforce-eager
+--max-num-seqs 1`.
+
+Qwen3-1.7B fp16 không vừa VRAM còn ~3.2/4.0 GiB (Windows chiếm GPU). Serving
+live dùng `Qwen/Qwen3-0.6B` (`ports.template`). Probe: `/version` = `0.28.0`,
+111 metric `vllm:`, `is_real_vllm: true` → `evidence/ip07-vllm-identity.json`.
+`lab28 evidence` ghi IP07 **ready**.
+
+Sau đó full profile + vLLM + pytest `-m gpu` làm Docker Desktop 500/OOM;
+cổng 8001 mất, test gpu dừng ở `EEE` (fixture), **không** có `/ask` 200 hay
+span serving. GitOps live cluster vẫn UNVERIFIED.
 
 ## 3. Production gaps (cần nói khi demo)
 
@@ -108,7 +121,8 @@ Máy có RTX 2050 (4 GB). Image `vllm/vllm-openai` quá lớn so với ~9 GB tr�
    token bucket 10 rps làm trễ — đó là bottleneck cạnh tranh cổng, không phải
    latency vLLM.
 6. **RAM:** Docker VM 8 GB; Spark + Airflow + core stack dễ OOM (container 137).
-7. **IP07:** cần vLLM thật (Kaggle T4 hoặc GPU đủ VRAM + disk).
+7. **IP07 identity đã live**, nhưng `/ask` + test gpu-marked chưa pass vì
+   full stack + vLLM vượt RAM Docker VM 8 GB (engine 500, cổng 8001 mất).
 8. **GitOps self-heal live:** chưa có cluster; chỉ validate manifest.
 
 ## 4. Bằng chứng — file live, không bịa
@@ -123,12 +137,12 @@ Máy có RTX 2050 (4 GB). Image `vllm/vllm-openai` quá lớn so với ~9 GB tr�
 | `evidence/ip04-feast-online.json` | **live** | entity J1, features PRESENT, `delta_version=1` |
 | `evidence/ip05-qdrant-search.json` | **live** | 14 points, hybrid scores |
 | `evidence/ip06-mlflow-release.json` | **live** | IT-J3 promote v3→v4 (`run_id=19e1ae8944a745c09caf3b3fe725a6b1`) |
-| `evidence/ip07-vllm-identity.json` | **UNVERIFIED** | `reachable: false` |
+| `evidence/ip07-vllm-identity.json` | **live** | vLLM 0.28.0, `Qwen/Qwen3-0.6B`, 111 metric `vllm:` |
 | `evidence/ip08-gateway.json` | **live** | 200 + 429 + `x-request-id` |
 | `evidence/ip09-prometheus-targets.json` | **live** | targets + alert rules (vLLM optional down) |
 | `evidence/ip09-grafana-dashboards.json` | **live** | dashboard `lab28-platform` |
 | `evidence/ip10-trace.json` | **live ingest+pipeline** | trace `45c8b110fbb94076841a0ef98e56bee4`; thiếu ask/vLLM/Feast/Qdrant query |
-| `evidence/integration-report.json` | **live** | score 83 khi full profile đang chạy |
+| `evidence/integration-report.json` | **live** | IP07 ready; score 100 trên 6 điểm CLI verify (IP02/08/09/10 unverified từ process) |
 | `evidence/load-profile.json` | **live** | 200 req / 8 workers: P50 1414 ms, P95 5233 ms, P99 7598 ms, 200× HTTP 200 |
 | `evidence/failure-recovery.json` | **live** | IT-J4 Feast/Qdrant/DLQ/replay |
 | `evidence/rollback.json` | **live** | IT-J3 alias promotion + rollback |
@@ -138,13 +152,15 @@ Sơ đồ kiến trúc: `docs/images/lab28-architecture-overview.png`.
 
 ## 5. Việc còn lại
 
-1. Nối **vLLM thật** (Kaggle T4 hoặc GPU + đủ disk cho image) → IP07, `/ask`,
-   span serving, test gpu-marked.
+1. Restart Docker Desktop, lên **core + gpu** (không Spark/Airflow) rồi
+   gọi `/ask` + pytest `-m gpu` khi RAM đủ; sau đó thu span serving IP10.
 2. Cluster Argo CD nếu lớp cấp → drift/self-heal live.
-3. Commit/push nhánh `ca-nhan-loc` khi nộp (chưa commit trong phiên này).
+3. Commit/push `compose.gpu.yaml`, `ports.template`, evidence IP07, `ANSWERS.md`
+   khi bạn yêu cầu.
 
 ## 6. Contribution
 
 Làm cá nhân: adapter, fast suite, Compose core + full profile, J1–J5 (trừ gpu),
-evidence IP01–IP06/IP08–IP10 (ingest+pipeline), load profile, failure injection,
-MLflow rollback, GitOps validate. IP07 và GitOps sync trên cluster còn UNVERIFIED.
+evidence IP01–IP06/IP08–IP10 (ingest+pipeline), IP07 identity vLLM 0.28.0,
+load profile, failure injection, MLflow rollback, GitOps validate. Còn `/ask`
+end-to-end trên GPU (OOM) và GitOps sync live.

@@ -1,7 +1,7 @@
 {
   "collection": "lab28_documents",
   "question": "Nền tảng dữ liệu của lab này gồm những thành phần nào?",
-  "points_total": 14,
+  "points_total": 15,
   "embedding_model_id": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2@faf4aa4225822f3bc6376869cb1164e8e3feedd0",
   "results": [
     {
@@ -15,7 +15,7 @@
       "doc_id": "doc-degraded-policy",
       "title": "Suy giảm phải luôn hiển thị",
       "snippet": "Nền tảng cho phép trả lời trên đường suy giảm khi Feast hoặc Qdrant không sẵn sàng, nhưng bắt buộc phải ghi lý do vào phần bằng chứng và tăng bộ đếm lab28_degraded_responses_total. Đặt biến môi trường LAB28_ALLOW_DEGRADED thành false sẽ chuyển sang chế độ thất bại đóng: yêu cầu bị từ chối thay vì được trả lời trên đường thiếu dữ liệu.",
-      "score": 0.625,
+      "score": 0.6111111,
       "retrieval_mode": "hybrid"
     },
     {
@@ -26,17 +26,17 @@
       "retrieval_mode": "hybrid"
     },
     {
-      "doc_id": "doc-ip05-qdrant",
-      "title": "IP05 — Qdrant truy hồi tài liệu nền",
-      "snippet": "Qdrant lưu collection lai ghép gồm vector dày và vector thưa, hợp nhất kết quả bằng thuật toán RRF. Mô hình nhúng được ghim theo tên và theo commit revision, vì một mô hình nhúng trôi phiên bản sẽ đổi toàn bộ vector và biểu hiện giống như suy giảm chất lượng truy hồi. Điểm dữ liệu dùng ID suy ra từ doc_id nên lập chỉ mục lại cùng tài liệu sẽ ghi đè đúng một điểm chứ không nhân bản.",
-      "score": 0.375,
+      "doc_id": "doc-ip06-mlflow",
+      "title": "IP06 — MLflow là sổ đăng ký bản phát hành",
+      "snippet": "Thứ được đăng ký trong MLflow là một bản phát hành, không phải bộ trọng số. Bản phát hành gồm prompt, cấu hình truy hồi, model id được phục vụ và phiên bản dữ liệu dùng để đánh giá. Nền tảng dùng alias champion thay cho stage: alias cho biết phiên bản nào đang thực sự phục vụ, và quay lui chỉ là một lệnh chuyển alias về phiên bản trước.",
+      "score": 0.35,
       "retrieval_mode": "hybrid"
     },
     {
       "doc_id": "doc-ip01-kafka",
       "title": "IP01 — Kafka là ranh giới nhận dữ liệu",
       "snippet": "Mọi sự kiện vào nền tảng đều đi qua topic data.raw của Kafka. API là nhà sản xuất duy nhất được phép ghi vào topic này, nhờ vậy mọi bản ghi đều đã qua kiểm tra hợp lệ, đã có idempotency_key và đã mang header traceparent. Producer dùng acks=all và bật idempotence, nên khi API trả về 202 thì broker đã ghi bền vững bản ghi đó. Thông điệp xử lý thất bại quá số lần cho phép sẽ được chuyển sang topic da",
-      "score": 0.36666667,
+      "score": 0.34285715,
       "retrieval_mode": "hybrid"
     }
   ]

@@ -2,6 +2,9 @@ services:
   vllm:
     image: vllm/vllm-openai:v0.28.0
     profiles: ["gpu"]
+    environment:
+      VLLM_USE_V2_MODEL_RUNNER: "0"
+      VLLM_WSL2_ENABLE_PIN_MEMORY: "1"
     command:
       - --model
       - ${LAB28_VLLM_MODEL_ID:-Qwen/Qwen3-1.7B}
@@ -10,7 +13,14 @@ services:
       - --port
       - "8000"
       - --dtype
-      - auto
+      - half
+      - --max-model-len
+      - "512"
+      - --gpu-memory-utilization
+      - "0.70"
+      - --enforce-eager
+      - --max-num-seqs
+      - "1"
     ports:
       - "${LAB28_VLLM_PORT:-8001}:8000"
     volumes:
