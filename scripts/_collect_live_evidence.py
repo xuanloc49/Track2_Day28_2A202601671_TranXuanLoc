@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "integration-tests"))
 sys.path.insert(0, str(ROOT / "src"))
 
 import stack  # noqa: E402
+
 from lab28_platform.settings import Settings  # noqa: E402
 
 OUT = ROOT / "evidence"
@@ -21,7 +22,10 @@ OUT.mkdir(exist_ok=True)
 
 def dump(name: str, payload: object) -> None:
     path = OUT / name
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False, default=str), encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
     print(f"wrote {path}")
 
 
@@ -117,7 +121,12 @@ def collect_ip09() -> None:
     )
     grafana_url = "http://localhost:3000"
     auth = ("admin", "admin")
-    dashboards = httpx.get(f"{grafana_url}/api/search", params={"type": "dash-db"}, auth=auth, timeout=10)
+    dashboards = httpx.get(
+        f"{grafana_url}/api/search",
+        params={"type": "dash-db"},
+        auth=auth,
+        timeout=10,
+    )
     datasources = httpx.get(f"{grafana_url}/api/datasources", auth=auth, timeout=10)
     dump(
         "ip09-grafana-dashboards.json",
@@ -128,7 +137,11 @@ def collect_ip09() -> None:
                 for entry in dashboards.json()
             ],
             "datasources": [
-                {"name": entry.get("name"), "type": entry.get("type")} for entry in datasources.json()
+                {
+                    "name": entry.get("name"),
+                    "type": entry.get("type"),
+                }
+                for entry in datasources.json()
             ],
         },
     )
@@ -148,8 +161,15 @@ def collect_ip04(settings: Settings) -> None:
         {
             "request": request,
             "status_code": response.status_code,
-            "body": response.json() if response.headers.get("content-type", "").startswith("application/json") else response.text[:2000],
-            "note": "core stack: Feast is serving; rows stay empty until the full-profile Spark export/materialize runs",
+            "body": (
+                response.json()
+                if response.headers.get("content-type", "").startswith("application/json")
+                else response.text[:2000]
+            ),
+            "note": (
+                "core stack: Feast is serving; rows stay empty until "
+                "the full-profile Spark export/materialize runs"
+            ),
         },
     )
 
@@ -177,7 +197,11 @@ def collect_ip10() -> None:
                 params={"service": service, "limit": 5},
                 timeout=10.0,
             )
-            found = list((response.json().get("data") or [])) if response.status_code == 200 else []
+            found = (
+                list(response.json().get("data") or [])
+                if response.status_code == 200
+                else []
+            )
         except Exception as error:
             payload["services"][service] = {"error": f"{type(error).__name__}: {error}"}
             continue
@@ -214,7 +238,11 @@ def collect_ip10() -> None:
             "note": "UNVERIFIED on core stack without a real vLLM endpoint",
         }
         ask_body = {}
-    trace_id = (ask_body.get("evidence") or {}).get("trace_id") if isinstance(ask_body, dict) else None
+    trace_id = (
+        (ask_body.get("evidence") or {}).get("trace_id")
+        if isinstance(ask_body, dict)
+        else None
+    )
     if not trace_id:
         gateway_sample = (payload.get("services") or {}).get("lab28-gateway") or {}
         samples = gateway_sample.get("sample") or []
@@ -226,7 +254,10 @@ def collect_ip10() -> None:
             "trace_id": trace_id,
             "span_names": seen,
             "missing_required": [name for name in required if name not in seen],
-            "note": "core stack cannot produce Airflow/Spark/vLLM spans until the full profile and GPU path run",
+            "note": (
+                "core stack cannot produce Airflow/Spark/vLLM spans "
+                "until the full profile and GPU path run"
+            ),
         }
     dump("ip10-trace.json", payload)
 

@@ -1,0 +1,2 @@
+1 passed, 71 deselected in 5.00s
+uv run --env-file .env pytest integration-tests -m langsmith

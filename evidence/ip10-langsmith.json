@@ -1,0 +1,28 @@
+{
+  "captured_at": "2026-09-04T13:33:37.719859+00:00",
+  "project": "lab-28",
+  "langsmith_sessions_http": 200,
+  "project_found": true,
+  "session_count": 1,
+  "session_names": [
+    "lab-28"
+  ],
+  "prometheus_metric": "otelcol_exporter_sent_spans or _total",
+  "span_exporters": [
+    {
+      "exporter": "debug",
+      "value": "138"
+    },
+    {
+      "exporter": "otlp/jaeger",
+      "value": "138"
+    },
+    {
+      "exporter": "otlphttp/langsmith",
+      "value": "138"
+    }
+  ],
+  "exporter_count": 3,
+  "pytest": "integration-tests -m langsmith: 1 passed",
+  "note": "OTLP HTTP exporter otlphttp/langsmith is wired in monitoring/otel-collector.yaml. Key lives in gitignored .env and collector env, not in this file."
+}

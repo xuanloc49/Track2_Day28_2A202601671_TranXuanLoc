@@ -273,6 +273,9 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.159.0
     command: ["--config=/etc/otelcol/config.yaml"]
+    environment:
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-lab-28}
     volumes:
       - ./monitoring/otel-collector.yaml:/etc/otelcol/config.yaml:ro
     ports:

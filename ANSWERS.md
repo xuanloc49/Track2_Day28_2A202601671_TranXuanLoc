@@ -53,6 +53,20 @@ Workaround Qdrant: image `qdrant/qdrant:v1.19.0` có `./entrypoint.sh` **0 byte*
 
 Windows: `lab28 release` cần `$env:PYTHONUTF8="1"` vì MLflow in emoji ra stdout (`cp1252`).
 
+### LangSmith (OTLP thứ hai)
+
+Collector export `otlphttp/langsmith` → `https://api.smith.langchain.com/otel/v1/traces`.
+`compose.yaml` truyền `LANGSMITH_API_KEY` / `LANGSMITH_PROJECT` từ `.env` (không
+ghi secret vào YAML). Khởi động:
+
+```text
+docker compose --env-file ports.template --env-file .env --profile full up -d --build --wait
+```
+
+Pytest: `uv run --env-file .env pytest integration-tests -m langsmith` → **1 passed**.
+Prometheus thấy 3 span exporter, gồm `otlphttp/langsmith` (138 spans sent).
+
+
 ### GPU / vLLM / `/ask`
 
 Image thật `vllm/vllm-openai:v0.28.0`. Overlay `compose.gpu.yaml`:
@@ -135,11 +149,13 @@ matrix, không phải một ID xuyên suốt.
 2. **Gateway:** rate limit 10 token/s, không JWT. Health-check `/ready` nghĩa là
    ingest cũng bị eject khi vLLM/Qdrant down (một process vừa ingest vừa serve).
 3. **Secret:** Grafana `admin/admin` là lab default; không commit `.env`.
-4. **LangSmith UNVERIFIED** (không `LANGSMITH_API_KEY`).
+4. **LangSmith live:** collector export `otlphttp/langsmith` + project `lab-28`.
+   Pytest `-m langsmith` **1 passed**. Key chỉ nằm trong `.env` (gitignored).
 5. **Load probe** bắn `/ready` (stdlib script), không phải `/ask`. P95/P99 bị
    token bucket 10 rps làm trễ — đó là bottleneck cạnh tranh cổng, không phải
    latency vLLM. `/ask` thật ~4.8s (llm ~3.6s) trên 0.6B.
-6. **RAM:** Docker VM 8 GB không giữ Spark + Airflow + vLLM cùng lúc.
+6. **RAM:** laptop ~16 GB; `.wslconfig` `memory=10GB`. Spark + Airflow + vLLM
+   cùng lúc vẫn dễ OOM. Session này chỉ bật `--profile full` (không GPU).
 7. **Câu trả lời truncated** ở `max_tokens=64` → `degraded` dù inference thật.
 8. **GitOps self-heal live:** chưa có cluster; chỉ validate manifest.
 9. **Cùng một trace ID cho 11 span:** chưa chứng minh (cần Spark+vLLM cùng lúc).
@@ -162,6 +178,8 @@ matrix, không phải một ID xuyên suốt.
 | `evidence/ip09-prometheus-targets.json` | **live** | targets + alert rules (snapshot trước GPU; scrape vLLM **up** lúc chạy gpu test) |
 | `evidence/ip09-grafana-dashboards.json` | **live** | dashboard `lab28-platform` |
 | `evidence/ip10-trace.json` | **live, hai trace** | ingest `45c8b110…` + serving `4c48cdee…`; union đủ 11 required spans |
+| `evidence/ip10-langsmith.json` | **live** | project `lab-28`; 3 exporter (`otlp/jaeger`, `otlphttp/langsmith`, `debug`); 138 spans sent |
+| `evidence/pytest-langsmith.txt` | **live** | `pytest -m langsmith` → 1 passed |
 | `evidence/integration-report.json` | **live** | IP07 ready; score 100 trên 6 điểm CLI verify (IP02/08/09/10 unverified từ process) |
 | `evidence/load-profile.json` | **live** | 200 req / 8 workers: P50 1414 ms, P95 5233 ms, P99 7598 ms, 200× HTTP 200 |
 | `evidence/failure-recovery.json` | **live** | IT-J4 Feast/Qdrant/DLQ/replay |
@@ -173,15 +191,15 @@ Sơ đồ kiến trúc: `docs/images/lab28-architecture-overview.png`.
 
 ## 5. Việc còn lại
 
-1. Spark + vLLM cùng lúc (cần Docker VM > 8 GB) để IT-J1/J5/span-coverage gpu
-   chứng minh **một** trace ID mang đủ 11 span.
+1. Spark + vLLM cùng lúc để chứng minh **một** trace ID mang đủ 11 span
+   (IT-J1/J5 gpu). Laptop 16 GB / WSL 10 GB chưa đủ an toàn.
 2. Cluster Argo CD nếu lớp cấp → drift/self-heal live.
-3. `LANGSMITH_API_KEY` nếu muốn chân export IP10 thứ hai.
-4. Commit/push evidence serving + `compose.gpu.yaml` + Envoy `/ready` khi bạn yêu cầu.
+3. Commit/push wiring LangSmith + `evidence/ip10-langsmith.json` (không commit `.env`).
 
 ## 6. Contribution
 
 Làm cá nhân: adapter, fast suite, Compose core + full profile, J1–J5 (phần
 không gpu), 8 test gpu (Prometheus/J3/J4), `/ask` 200 trên vLLM 0.28.0,
 evidence IP01–IP10 (IP10 = union hai trace), load profile, failure injection,
-MLflow rollback, GitOps validate. Chưa: cùng-ID 11 span, LangSmith, GitOps sync live.
+MLflow rollback, GitOps validate, LangSmith OTLP export (project `lab-28`).
+Chưa: cùng-ID 11 span, GitOps sync live, demo trên lớp.
